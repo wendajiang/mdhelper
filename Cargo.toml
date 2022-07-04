@@ -1,0 +1,14 @@
+[package]
+name = "mdhelper"
+version = "0.2.0"
+authors = ["david<wendajiang93@163.com>"]
+edition = "2021"
+
+[[bin]]
+name = "mdhelper"
+path = "src/cli.rs"
+
+
+[dependencies]
+chrono = "0.4"
+clap = {version = "3.2.8", features = ["default", "derive", "cargo"] }
