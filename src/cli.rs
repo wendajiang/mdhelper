@@ -1,70 +1,36 @@
-use chrono::prelude::*;
-use chrono::DateTime;
-use clap::{Command, Arg};
-use std::io::Write;
+mod cfg;
+mod cmd;
+
+use clap::{crate_description, crate_name, crate_version, Command};
+
+const VERSION: &str = concat!("v", crate_version!());
 
 fn main() {
-    let matches = Command::new("genmd")
-        .version("1.0")
-        .author("david")
-        .about("generate md file")
-        .arg(
-            Arg::new("file_path")
-                .short('p')
-                .long("file_path")
-                .value_name("FILE_PATH")
-                .about("get the file path, example ./help")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::new("title")
-                .short('t')
-                .long("title")
-                .value_name("TITLE")
-                .takes_value(true)
-                .about("get the blog title"),
-        )
-        .arg(
-            Arg::new("mermaid")
-                .short('m')
-                .long("mermaid")
-                .value_name("mermaid true/false")
-                .about("-m/--mermaid true to turn on mermaid"),
-        )
-        .arg(Arg::new("file_name").required(true).index(1))
-        .get_matches();
+    let command = create_clap_command();
 
-    let file_path = matches.value_of("file_path").unwrap_or("./content/");
-    let title = matches.value_of("title").unwrap_or("");
-    let file_name_in = matches.value_of("file_name").unwrap();
-    let mermaid_flag = matches.value_of("mermaid").unwrap_or("false");
-    let mut mermaid_template =
-        "<!--\nmermaid example:\n<div class=\"mermaid\">\n    mermaid program\n</div>\n-->";
-    if mermaid_flag == "false" {
-        mermaid_template = "";
+    let res = match command.get_matches().subcommand() {
+        Some(("gen", sub_matches)) => cmd::gen::execute(sub_matches),
+        Some(("record", sub_matches)) => cmd::gen::execute(sub_matches),
+        _ => unreachable!(),
+    };
+
+    if let Err(e) = res {
+        eprintln!("{e}");
+        std::process::exit(101);
     }
+}
 
-    let pre_content = "+++\ntemplate = \"page.html\"\n";
-
-    // let utc_time: DateTime<Utc> = Utc::now();
-    let local_time: DateTime<Local> = Local::now();
-
-    // println!("{}", utc_time.format("%Y-%m-%d %T"));
-    // println!("{}", local_time.format("%Y-%m-%d %T"));
-    let str_datetime = local_time.format("%Y-%m-%d %T");
-
-    let file_name = std::format!("{}{}.md", file_path, file_name_in);
-    println!("file_name is {}", file_name);
-
-    let content = std::format!("{}date = \"{}\"\ntitle = \"{}\"\n[taxonomies]\ntags = []\n\n[extra]\nmermaid = {}\nusemathjax = true\n+++\n{}", pre_content, str_datetime, title, mermaid_flag, mermaid_template);
-    println!("{}", content);
-
-    let mut file = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(file_name)
-        .unwrap();
-
-    file.write_fmt(format_args!("{}", content)).unwrap();
+fn create_clap_command() -> Command<'static> {
+    Command::new(crate_name!())
+        .about(crate_description!())
+        .author("David <wendajiang93@163.com>")
+        .version(VERSION)
+        .arg_required_else_help(true)
+        .propagate_version(true)
+        .after_help(
+            "For more information about specific command, try `mdhelper <command> --help`\n
+         ",
+        )
+        .subcommand(cmd::gen::make_subcommand())
+        .subcommand(cmd::record::make_subcommand())
 }
