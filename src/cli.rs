@@ -10,7 +10,7 @@ fn main() {
 
     let res = match command.get_matches().subcommand() {
         Some(("gen", sub_matches)) => cmd::gen::execute(sub_matches),
-        Some(("record", sub_matches)) => cmd::gen::execute(sub_matches),
+        Some(("record", sub_matches)) => cmd::record::execute(sub_matches),
         _ => unreachable!(),
     };
 
