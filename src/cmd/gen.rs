@@ -1,3 +1,4 @@
+use crate::cfg::config;
 use anyhow::bail;
 use chrono::prelude::*;
 use chrono::DateTime;
@@ -17,8 +18,10 @@ pub fn make_subcommand<'help>() -> Command<'help> {
 }
 
 pub fn execute(arg: &ArgMatches) -> anyhow::Result<()> {
-    // todo default use mdhelper.toml in ~/.config/mdhelper.toml
-    let file_path = arg.value_of("file_path").unwrap_or("./content/");
+    let config_file_path = config()?.gen.path;
+    let file_path = arg
+        .value_of("file_path")
+        .unwrap_or(config_file_path.as_str());
 
     let title = if let Ok(title) = request_blog_title() {
         title
