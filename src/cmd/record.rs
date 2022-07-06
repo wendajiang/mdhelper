@@ -5,7 +5,6 @@ use clap::{Arg, ArgMatches, Command};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
-use std::str::FromStr;
 
 pub fn make_subcommand<'help>() -> Command<'help> {
     Command::new("record")
@@ -58,19 +57,25 @@ fn daily(path: &str) -> anyhow::Result<()> {
     let local_time: DateTime<Local> = Local::now();
     let time_format = local_time.format("%Y%m%d");
     let time_format2 = local_time.format("%Y-%m-%d");
-    let file_name = PathBuf::from_str(path)?.join(format!("{}.md", time_format));
+    let file_name = PathBuf::from(path).join(format!("{}.md", time_format));
 
-    let summary = PathBuf::from_str(path)?.join("SUMMARY.md");
+    let summary = PathBuf::from(path).join("SUMMARY.md");
 
-    fs::OpenOptions::new().create(true).open(file_name)?;
+    fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(file_name)
+        .unwrap();
 
     let mut summary_fd = fs::OpenOptions::new()
         .create(true)
+        .read(true)
         .write(true)
         .append(true)
-        .open(summary)?;
+        .open(summary)
+        .unwrap();
 
-    summary_fd.write_all(format!("- [{}]({})", time_format2, time_format).as_bytes())?;
+    summary_fd.write_all(format!("- [{}]({}.md)", time_format2, time_format).as_bytes())?;
 
     Ok(())
 }
