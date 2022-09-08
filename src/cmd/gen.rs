@@ -5,6 +5,7 @@ use chrono::DateTime;
 use clap::{Arg, ArgMatches, Command};
 use std::io;
 use std::io::Write;
+use std::path::PathBuf;
 
 pub fn make_subcommand<'help>() -> Command<'help> {
     Command::new("gen").about("generate md file").arg(
@@ -53,8 +54,10 @@ pub fn execute(arg: &ArgMatches) -> anyhow::Result<()> {
     // println!("{}", local_time.format("%Y-%m-%d %T"));
     let str_datetime = local_time.format("%Y-%m-%d %T");
 
-    let complete_file_name = std::format!("{}{}.md", file_path, file_name);
-    println!("file_name is {}", complete_file_name);
+    let complete_file_name = PathBuf::from(file_path).join(file_name);
+
+    // let complete_file_name = std::format!("{}{}.md", file_path, file_name);
+    println!("file_name is {:?}", complete_file_name);
 
     let content = std::format!("{pre_content}date = \"{str_datetime}\"\ntitle = \"{title}\"\n[taxonomies]\ntags = []\n\n[extra]\nmermaid = {mermaid_flag}\nusemathjax = true\n+++\n{mermaid_template}");
     println!("{}", content);
@@ -101,5 +104,5 @@ fn confirm() -> bool {
     io::stdout().flush().unwrap();
     let mut s = String::new();
     io::stdin().read_line(&mut s).ok();
-    matches!(&*s.trim(), "Y" | "y" | "yes" | "Yes")
+    matches!(s.trim(), "Y" | "y" | "yes" | "Yes")
 }
