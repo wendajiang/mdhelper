@@ -3,9 +3,48 @@ use anyhow::bail;
 use chrono::prelude::*;
 use chrono::DateTime;
 use clap::{Arg, ArgMatches, Command};
+use serde::{Deserialize, Serialize};
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Extra {
+    mermaid: bool,
+    usemathjax: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Taxonomies {
+    tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct ZolaAndTyporaYamlFrontMatter {
+    template: String,
+    date: String,
+    title: String,
+    #[serde(rename = "typora-copy-images-to")]
+    typora_copy_images_to: String,
+    taxonomies: Taxonomies,
+    extra: Extra,
+}
+
+impl ZolaAndTyporaYamlFrontMatter {
+    pub fn new() -> ZolaAndTyporaYamlFrontMatter {
+        Self {
+            template: "page.html".to_string(),
+            date: "".to_string(),
+            title: "".to_string(),
+            typora_copy_images_to: "../static/pics/${filename}".to_string(),
+            taxonomies: Taxonomies { tags: vec![] },
+            extra: Extra {
+                mermaid: false,
+                usemathjax: true,
+            },
+        }
+    }
+}
 
 pub fn make_subcommand<'help>() -> Command<'help> {
     Command::new("gen").about("generate md file").arg(
@@ -24,8 +63,10 @@ pub fn execute(arg: &ArgMatches) -> anyhow::Result<()> {
         .value_of("file_path")
         .unwrap_or(config_file_path.as_str());
 
-    let title = if let Ok(title) = request_blog_title() {
-        title
+    let mut yml_front_matter = ZolaAndTyporaYamlFrontMatter::new();
+
+    if let Ok(title) = request_blog_title() {
+        yml_front_matter.title = title;
     } else {
         bail!("must input the blog title")
     };
@@ -36,31 +77,42 @@ pub fn execute(arg: &ArgMatches) -> anyhow::Result<()> {
     };
 
     println!("\nDo you want support mermaid? (y/n)");
-    let (mermaid_template, mermaid_flag) = if confirm() {
-        (
-            "<!--\nmermaid example:\n<div class=\"mermaid\">\n    mermaid program\n</div>\n-->",
-            "true",
-        )
+    let mermaid_template = if confirm() {
+        yml_front_matter.extra.mermaid = true;
+        r#"
+# mermaid example: 
+# <div class="mermaid">
+#     mermaid program
+# </div>
+"#
     } else {
-        ("", "false")
+        // do nothing
+        ""
     };
 
-    let pre_content = "+++\ntemplate = \"page.html\"\n";
+    let delimiter = "---\n";
 
     // let utc_time: DateTime<Utc> = Utc::now();
     let local_time: DateTime<Local> = Local::now();
 
     // println!("{}", utc_time.format("%Y-%m-%d %T"));
     // println!("{}", local_time.format("%Y-%m-%d %T"));
-    let str_datetime = local_time.format("%Y-%m-%d %T");
+    yml_front_matter.date = local_time.format("%Y-%m-%d %T").to_string();
 
     let complete_file_name = PathBuf::from(file_path).join(file_name);
 
     // let complete_file_name = std::format!("{}{}.md", file_path, file_name);
     println!("file_name is {:?}", complete_file_name);
 
-    let content = std::format!("{pre_content}date = \"{str_datetime}\"\ntitle = \"{title}\"\n[taxonomies]\ntags = []\n\n[extra]\nmermaid = {mermaid_flag}\nusemathjax = true\n+++\n{mermaid_template}");
-    println!("{}", content);
+    let content = format!(
+        "{}{}{}{}",
+        delimiter,
+        serde_yaml::to_string(&yml_front_matter).unwrap(),
+        mermaid_template,
+        delimiter
+    );
+
+    println!("{content}");
 
     let mut file = std::fs::OpenOptions::new()
         .read(true)
