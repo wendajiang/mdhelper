@@ -71,7 +71,7 @@ pub fn execute(arg: &ArgMatches) -> anyhow::Result<()> {
         bail!("must input the blog title")
     };
     let file_name = if let Ok(file_name) = request_blog_file_name() {
-        file_name
+        file_name + ".md"
     } else {
         bail!("must input the file name")
     };
