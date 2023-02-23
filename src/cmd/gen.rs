@@ -12,6 +12,7 @@ use std::path::PathBuf;
 struct Extra {
     mermaid: bool,
     usemathjax: bool,
+    lead: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,6 +24,7 @@ struct Taxonomies {
 struct ZolaAndTyporaYamlFrontMatter {
     template: String,
     date: String,
+    updated: String,
     title: String,
     #[serde(rename = "typora-copy-images-to")]
     typora_copy_images_to: String,
@@ -33,14 +35,16 @@ struct ZolaAndTyporaYamlFrontMatter {
 impl ZolaAndTyporaYamlFrontMatter {
     pub fn new() -> ZolaAndTyporaYamlFrontMatter {
         Self {
-            template: "page.html".to_string(),
+            template: "blog/page.html".to_string(),
             date: "".to_string(),
+            updated: "".to_string(),
             title: "".to_string(),
             typora_copy_images_to: "../static/pics/${filename}".to_string(),
             taxonomies: Taxonomies { tags: vec![] },
             extra: Extra {
                 mermaid: false,
                 usemathjax: true,
+                lead: "".to_string(),
             },
         }
     }
@@ -98,6 +102,7 @@ pub fn execute(arg: &ArgMatches) -> anyhow::Result<()> {
     // println!("{}", utc_time.format("%Y-%m-%d %T"));
     // println!("{}", local_time.format("%Y-%m-%d %T"));
     yml_front_matter.date = local_time.format("%Y-%m-%d %T").to_string();
+    yml_front_matter.updated = local_time.format("%Y-%m-%d %T").to_string();
 
     let complete_file_name = PathBuf::from(file_path).join(file_name);
 
