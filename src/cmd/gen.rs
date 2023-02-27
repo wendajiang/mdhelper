@@ -22,10 +22,11 @@ struct Taxonomies {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ZolaAndTyporaYamlFrontMatter {
+    title: String,
+    description: String,
     template: String,
     date: String,
     updated: String,
-    title: String,
     #[serde(rename = "typora-copy-images-to")]
     typora_copy_images_to: String,
     taxonomies: Taxonomies,
@@ -35,10 +36,11 @@ struct ZolaAndTyporaYamlFrontMatter {
 impl ZolaAndTyporaYamlFrontMatter {
     pub fn new() -> ZolaAndTyporaYamlFrontMatter {
         Self {
+            title: "".to_string(),
+            description: "".to_string(),
             template: "blog/page.html".to_string(),
             date: "".to_string(),
             updated: "".to_string(),
-            title: "".to_string(),
             typora_copy_images_to: "../static/pics/${filename}".to_string(),
             taxonomies: Taxonomies { tags: vec![] },
             extra: Extra {
