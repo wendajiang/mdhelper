@@ -87,9 +87,9 @@ pub fn execute(arg: &ArgMatches) -> anyhow::Result<()> {
         yml_front_matter.extra.mermaid = true;
         r#"
 # mermaid example: 
-# <div class="mermaid">
+# {% mermaid() %}
 #     mermaid program
-# </div>
+# {% end %}
 "#
     } else {
         // do nothing
